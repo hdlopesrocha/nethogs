@@ -24,18 +24,15 @@ Waiting for first packet to arrive (see sourceforge.net bug 1019381)
 
 2016-02-11.13:44:06	   3170	hdlopesrocha	/usr/lib/firefox/firefox	wlan0	     5.650	   460.069KB/sec
 
-
 2016-02-11.13:44:07	   3170	hdlopesrocha	/usr/lib/firefox/firefox	wlan0	     5.650	   460.069KB/sec
 
 2016-02-11.13:44:08	   3170	hdlopesrocha	/usr/lib/firefox/firefox	wlan0	     5.650	   460.069KB/sec
-
 
 2016-02-11.13:44:09	   3170	hdlopesrocha	/usr/lib/firefox/firefox	wlan0	     5.650	   460.069KB/sec
 
 2016-02-11.13:44:10	   3170	hdlopesrocha	/usr/lib/firefox/firefox	wlan0	     1.011	    61.209KB/sec
 
-2016-02-11.13:44:11	   3170	hdlopesrocha	/usr/lib/firefox/firefox	wlan0	     0.115	     0.101KB/sec
-</code>
+2016-02-11.13:44:11	   3170	hdlopesrocha	/usr/lib/firefox/firefox	wlan0	     0.115	     0.101KB/sec</code>
 
 Enjoy ;-)
 
