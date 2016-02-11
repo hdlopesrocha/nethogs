@@ -1,6 +1,6 @@
 VERSION      := 0
 SUBVERSION   := 8
-MINORVERSION := 2-SNAPSHOT
+MINORVERSION := 2-hdlopesrocha
 
 #prefix := /usr
 prefix := /usr/local
