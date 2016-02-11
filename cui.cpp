@@ -29,9 +29,27 @@
 #include <cstdlib>
 #include <algorithm>
 
-#include <ncurses.h>
+
 #include "nethogs.h"
 #include "process.h"
+
+#include <iostream>
+#include <string>
+#include <stdio.h>
+#include <time.h>
+
+// Get current date/time, format is YYYY-MM-DD.HH:mm:ss
+const std::string currentDateTime() {
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+    // for more information about date/time format
+    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+
+    return buf;
+}
 
 
 std::string * caption;
@@ -68,7 +86,7 @@ public:
 		assert (m_pid >= 0);
 	}
 
-	void show (int row, unsigned int proglen);
+	void show (const char * timestamp);
 	void log ();
 
 	double sent_value;
@@ -110,47 +128,34 @@ std::string uid2username (uid_t uid)
 }
 
 
-void Line::show (int row, unsigned int proglen)
+void Line::show (const char * timestamp)
 {
 	assert (m_pid >= 0);
 	assert (m_pid <= PID_MAX);
-
-	if (m_pid == 0)
-		mvprintw (row, 6, "?");
-	else
-		mvprintw (row, 0, "%7d", m_pid);
-	std::string username = uid2username(m_uid);
-	mvprintw (row, 8, "%s", username.c_str());
-	if (strlen (m_name) > proglen) {
-		// truncate oversized names
-		char * tmp = strdup(m_name);
-		char * start = tmp + strlen (m_name) - proglen;
-		start[0] = '.';
-		start[1] = '.';
-		mvprintw (row, 8 + 9, "%s", start);
-		free (tmp);
-	} else {
-		mvprintw (row, 8 + 9, "%s", m_name);
+	if(m_pid==0){
+		return;
 	}
-	mvprintw (row, 8 + 9 + proglen + 2, "%s", devicename);
-	mvprintw (row, 8 + 9 + proglen + 2 + 6, "%10.3f", sent_value);
-	mvprintw (row, 8 + 9 + proglen + 2 + 6 + 9 + 3, "%10.3f", recv_value);
+
+
+	std::string username = uid2username(m_uid);
+	printf ("%s\t%7d\t%s\t%s\t%s\t%10.3f\t%10.3f", timestamp,m_pid, username.c_str(), m_name,devicename,sent_value,recv_value);
 	if (viewMode == VIEWMODE_KBPS)
 	{
-		mvprintw (row, 8 + 9 + proglen + 2 + 6 + 9 + 3 + 11, "KB/sec");
+		printf ("KB/sec");
 	}
 	else if (viewMode == VIEWMODE_TOTAL_MB)
 	{
-		mvprintw (row, 8 + 9 + proglen + 2 + 6 + 9 + 3 + 11, "MB    ");
+		printf ("MB");
 	}
 	else if (viewMode == VIEWMODE_TOTAL_KB)
 	{
-		mvprintw (row, 8 + 9 + proglen + 2 + 6 + 9 + 3 + 11, "KB    ");
+		printf ("KB");
 	}
 	else if (viewMode == VIEWMODE_TOTAL_B)
 	{
-		mvprintw (row, 8 + 9 + proglen + 2 + 6 + 9 + 3 + 11, "B     ");
+		printf ("B");
 	}
+	printf ("\n");
 }
 
 void Line::log() {
@@ -196,43 +201,18 @@ int GreatestFirst (const void * ma, const void * mb)
 
 void init_ui ()
 {
-	WINDOW * screen = initscr();
-	raw();
-	noecho();
-	cbreak();
-	nodelay(screen, TRUE);
+
 	caption = new std::string ("NetHogs");
 	caption->append(getVersion());
 	//caption->append(", running at ");
+	printf ("%s\n", caption->c_str());
+	printf ("TIME PID USER PROGRAM DEV SENT RECEIVED\n");
+
 }
 
 void exit_ui ()
 {
-	clear();
-	endwin();
 	delete caption;
-}
-
-void ui_tick ()
-{
-	switch (getch()) {
-		case 'q':
-			/* quit */
-			quit_cb(0);
-			break;
-		case 's':
-			/* sort on 'sent' */
-			sortRecv = false;
-			break;
-		case 'r':
-			/* sort on 'received' */
-			sortRecv = true;
-			break;
-		case 'm':
-			/* switch mode: total vs kb/s */
-			viewMode = (viewMode + 1) % VIEWMODE_COUNT;
-			break;
-	}
 }
 
 float tomb (u_int32_t bytes)
@@ -356,58 +336,20 @@ void show_trace(Line * lines[], int nproc) {
 }
 
 void show_ncurses(Line * lines[], int nproc) {
-	int rows; // number of terminal rows
-	int cols; // number of terminal columns
-	unsigned int proglen; // max length of the "PROGRAM" column
-
 	double sent_global = 0;
 	double recv_global = 0;
+	std::string timestamp = currentDateTime();
 
-	getmaxyx(stdscr, rows, cols);	 /* find the boundaries of the screeen */
-
-	if (cols < 62) {
-		clear();
-		mvprintw(0,0, "The terminal is too narrow! Please make it wider.\nI'll wait...");
-		return;
-	}
-
-	if (cols > PROGNAME_WIDTH) cols = PROGNAME_WIDTH;
-
-	proglen = cols - 55;
-
-	clear();
-	mvprintw (0, 0, "%s", caption->c_str());
-	attron(A_REVERSE);
-	mvprintw (2, 0, "    PID USER     %-*.*s  DEV        SENT      RECEIVED       ", proglen, proglen, "PROGRAM");
-	attroff(A_REVERSE);
 
 	/* print them */
 	int i;
 	for (i=0; i<nproc; i++)
 	{
-		if (i+3 < rows)
-			lines[i]->show(i+3, proglen);
+		lines[i]->show(timestamp.c_str());
 		recv_global += lines[i]->recv_value;
 		sent_global += lines[i]->sent_value;
 		delete lines[i];
 	}
-
-	attron(A_REVERSE);
-	int totalrow = std::min(rows-1, 3+1+i);
-	mvprintw (totalrow, 0, "  TOTAL        %-*.*s          %10.3f  %10.3f ", proglen, proglen, " ", sent_global, recv_global);
-	if (viewMode == VIEWMODE_KBPS)
-	{
-		mvprintw (3+1+i, cols - 7, "KB/sec ");
-	} else if (viewMode == VIEWMODE_TOTAL_B) {
-		mvprintw (3+1+i, cols - 7, "B      ");
-	} else if (viewMode == VIEWMODE_TOTAL_KB) {
-		mvprintw (3+1+i, cols - 7, "KB     ");
-	} else if (viewMode == VIEWMODE_TOTAL_MB) {
-		mvprintw (3+1+i, cols - 7, "MB     ");
-	}
-	attroff(A_REVERSE);
-	mvprintw (totalrow+1, 0, "");
-	refresh();
 }
 
 // Display all processes and relevant network traffic using show function
@@ -428,6 +370,9 @@ void do_refresh()
 	for (int i = 0; i < nproc; i++)
 		lines[i] = NULL;
 #endif
+
+
+
 
 	while (curproc != NULL)
 	{
