@@ -132,30 +132,11 @@ void Line::show (const char * timestamp)
 {
 	assert (m_pid >= 0);
 	assert (m_pid <= PID_MAX);
-	if(m_pid==0){
-		return;
-	}
+
 
 
 	std::string username = uid2username(m_uid);
-	printf ("%s\t%7d\t%s\t%s\t%s\t%10.3f\t%10.3f", timestamp,m_pid, username.c_str(), m_name,devicename,sent_value,recv_value);
-	if (viewMode == VIEWMODE_KBPS)
-	{
-		printf ("KB/sec");
-	}
-	else if (viewMode == VIEWMODE_TOTAL_MB)
-	{
-		printf ("MB");
-	}
-	else if (viewMode == VIEWMODE_TOTAL_KB)
-	{
-		printf ("KB");
-	}
-	else if (viewMode == VIEWMODE_TOTAL_B)
-	{
-		printf ("B");
-	}
-	printf ("\n");
+	printf ("%s\t%7d\t%s\t%s\t%s\t%10.3f\t%10.3f\tKB/sec\n", timestamp,m_pid, username.c_str(), m_name,devicename,sent_value,recv_value);
 }
 
 void Line::log() {
@@ -416,22 +397,7 @@ void do_refresh()
 			{
 				//std::cout << "kbps viemode" << std::endl;
 				getkbps (curproc->getVal(), &value_recv, &value_sent);
-			}
-			else if (viewMode == VIEWMODE_TOTAL_KB)
-			{
-				//std::cout << "total viemode" << std::endl;
-				gettotalkb(curproc->getVal(), &value_recv, &value_sent);
-			}
-			else if (viewMode == VIEWMODE_TOTAL_MB)
-			{
-				//std::cout << "total viemode" << std::endl;
-				gettotalmb(curproc->getVal(), &value_recv, &value_sent);
-			}
-			else if (viewMode == VIEWMODE_TOTAL_B)
-			{
-				//std::cout << "total viemode" << std::endl;
-				gettotalb(curproc->getVal(), &value_recv, &value_sent);
-			}
+			}	
 			else
 			{
 				forceExit(false, "Invalid viewMode: %d", viewMode);

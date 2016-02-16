@@ -23,7 +23,6 @@
 #include <iostream>
 #include <strings.h>
 #include <string>
-#include <ncurses.h>
 #ifndef __APPLE__
 	#include <asm/types.h>
 #endif
